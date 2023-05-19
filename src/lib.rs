@@ -34,8 +34,8 @@ impl Camera {
     self.send_bytes(MessageType::ControlCommand, &[0x01])
 }
 
-  pub fn set(&self, command: impl ViscaCommand) -> io::Result<()> {
-    todo!();
+  pub fn set(&mut self, command: impl ViscaCommand) -> io::Result<()> {
+    self.send_bytes(command.msg_type(), &command.bytes())
   }
 
   pub fn send_bytes(&mut self, message_type: MessageType, bytes: &[u8]) -> io::Result<()> {
