@@ -9,8 +9,47 @@ pub mod commands;
 pub mod inquiry;
 mod messages;
 
-pub struct ViscaError {}
+#[derive(Debug)]
+pub enum ViscaError {
+  CameraConnectionError(io::Error),
+  MessageLengthError,
+  SyntaxError,
+  CommandBufferFullError,
+  CommandCanceledError,
+  NoSocketError,
+  CommandNotExecutableError,
+}
+
+impl std::error::Error for ViscaError{
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match *self {
+        ViscaError::CameraConnectionError(ref e) => Some(e),
+        ViscaError::MessageLengthError => None,
+        ViscaError::SyntaxError => None,
+        ViscaError::CommandBufferFullError => None,
+        ViscaError::CommandCanceledError => None,
+        ViscaError::NoSocketError => None,
+        ViscaError::CommandNotExecutableError => None,
+    }
+  }
+}
+
+impl std::fmt::Display for ViscaError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ViscaError::CameraConnectionError(e) => write!(f, "Unable to connect to the camera, {}", e),
+            ViscaError::MessageLengthError => write!(f, "VISCA message length error"),
+            ViscaError::SyntaxError => write!(f, "VISCA syntax error"),
+            ViscaError::CommandBufferFullError => write!(f, "VISCA command buffer full"),
+            ViscaError::CommandCanceledError => write!(f, "VISCA command canceled"),
+            ViscaError::NoSocketError => write!(f, "VISCA no socket error"),
+            ViscaError::CommandNotExecutableError => write!(f, "VISCA command not executable"),
+        }
+    }
+}
+
 pub type Result<T> = std::result::Result<T, ViscaError>;
+
 
 
 pub struct Camera {
@@ -20,9 +59,11 @@ pub struct Camera {
 }
 
 impl Camera {
-  pub fn new(addr: &str) -> io::Result<Self> {
-    let socket = UdpSocket::bind("0.0.0.0:0")?;
-    socket.connect(addr)?;
+  pub fn new(addr: &str) -> Result<Self> {
+    let socket = UdpSocket::bind("0.0.0.0:0")
+      .map_err(|e| ViscaError::CameraConnectionError(e))?;
+    socket.connect(addr)
+      .map_err(|e| ViscaError::CameraConnectionError(e))?;
     Ok(Camera { socket, seqnum: 0 , timeout: None})
   }
 
