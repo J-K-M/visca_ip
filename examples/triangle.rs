@@ -3,7 +3,7 @@ use visca_ip::*;
 use std::{thread::sleep, time::Duration};
 
 fn main() {
-  let cam = Camera::new("10.0.0.1").unwrap();
+  let mut cam = Camera::new("10.0.0.1").unwrap();
 
   let xs: [u32; 3] = [0x0374A, 0, 0xFC8B6];
   let ys: [u16; 3] = [0, 0x374A, 0];
